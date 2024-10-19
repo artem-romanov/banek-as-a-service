@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
+	"baneks.com/internal/banek_loader"
 	"baneks.com/internal/baneks/dto"
-	"baneks.com/internal/scraper"
 	util "baneks.com/internal/utils"
 	"github.com/labstack/echo/v4"
 )
@@ -21,8 +21,8 @@ func GetBanekBySlug(c echo.Context) error {
 	if err := util.Validate(c, request); err != nil {
 		return err
 	}
-
-	banek, err := scraper.GetBanekBySlug(request.Slug)
+	loader := banek_loader.NewBaneksSiteLoader()
+	banek, err := loader.GetBanekBySlug(request.Slug)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Banek not found")
 	}

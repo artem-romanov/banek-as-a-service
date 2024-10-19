@@ -3,13 +3,15 @@ package handlers
 import (
 	"net/http"
 
+	"baneks.com/internal/banek_loader"
 	"baneks.com/internal/baneks/dto"
-	"baneks.com/internal/scraper"
 	"github.com/labstack/echo/v4"
 )
 
 func GetRandomBanek(c echo.Context) error {
-	banek, err := scraper.GetRandomBanek()
+	balancer := banek_loader.GetBalancer()
+	banekLoader := balancer.GetLoader()
+	banek, err := banekLoader.GetRandomBanek()
 	if err != nil {
 		return echo.ErrBadRequest
 	}
