@@ -1,6 +1,6 @@
 package dto
 
-import "baneks.com/internal/models"
+import "baneks.com/internal/model"
 
 // Yeah, I know this struct is stupid.
 // But it's better for future changes between DTO and original entity
@@ -9,7 +9,7 @@ type BanekResponse struct {
 	Likes int    `json:"likes"`
 }
 
-func BanekToResponse(banek *models.Banek) BanekResponse {
+func BanekToResponse(banek *model.Banek) BanekResponse {
 	return BanekResponse{
 		Text:  banek.Text,
 		Likes: banek.Likes,

@@ -1,4 +1,4 @@
-package models
+package model
 
 type Banek struct {
 	Text  string `json:"text"`

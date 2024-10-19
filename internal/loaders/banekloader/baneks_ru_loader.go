@@ -1,4 +1,4 @@
-package banek_loader
+package banekloader
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"baneks.com/internal/models"
+	"baneks.com/internal/model"
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
 )
@@ -25,14 +25,14 @@ func NewBanekRuLoader() *BaneksRuLoader {
 	}
 }
 
-func (loader *BaneksRuLoader) GetRandomBanek() (models.Banek, error) {
+func (loader *BaneksRuLoader) GetRandomBanek() (model.Banek, error) {
 	response, err := http.Get(loader.siteUri + "/random")
 	if err != nil {
-		return models.Banek{}, err
+		return model.Banek{}, err
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		return models.Banek{}, errors.New(
+		return model.Banek{}, errors.New(
 			fmt.Sprintf(
 				"error loading banek, status code: %d",
 				response.StatusCode,
@@ -47,10 +47,10 @@ func (loader *BaneksRuLoader) GetRandomBanek() (models.Banek, error) {
 	return banek, nil
 }
 
-func (loader *BaneksRuLoader) extractBanekFromBody(body io.ReadCloser) (models.Banek, error) {
+func (loader *BaneksRuLoader) extractBanekFromBody(body io.ReadCloser) (model.Banek, error) {
 	doc, err := goquery.NewDocumentFromReader(body)
 	if err != nil {
-		return models.Banek{}, err
+		return model.Banek{}, err
 	}
 
 	banekText, _ := loader.extractText(doc)
@@ -62,7 +62,7 @@ func (loader *BaneksRuLoader) extractBanekFromBody(body io.ReadCloser) (models.B
 		banekLikes = 0
 	}
 
-	return models.Banek{
+	return model.Banek{
 		Text:  banekText,
 		Likes: banekLikes,
 	}, nil

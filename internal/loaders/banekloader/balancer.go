@@ -1,4 +1,4 @@
-package banek_loader
+package banekloader
 
 import (
 	"sync"
