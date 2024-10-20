@@ -26,6 +26,14 @@ type NotFoundRequestError struct {
 }
 
 func (e *NotFoundRequestError) Error() string {
+	if e.Err != nil {
+		return fmt.Sprintf(
+			"data not found by uri: %s, error: %s",
+			e.Uri,
+			e.Err.Error(),
+		)
+	}
+
 	return fmt.Sprintf("data not found by uri: %s", e.Uri)
 }
 
