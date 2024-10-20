@@ -2,9 +2,10 @@ package memesloader
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"net/http"
 
+	customerrors "baneks.com/internal/custom_errors"
 	"baneks.com/internal/model"
 	"github.com/PuerkitoBio/goquery"
 )
@@ -38,29 +39,48 @@ func (loader *QablydauMemeLoader) GetRandomMemes() ([]model.Meme, error) {
 	uri := loader.uri + "/random"
 	finalData := &JsonResponse{}
 	response, err := http.Get(uri)
+
 	if err != nil {
-		return nil, errors.New("error loading memes")
+		return nil, &customerrors.HttpNetworkError{
+			Err: err,
+			Uri: response.Request.RequestURI,
+		}
 	}
 	defer response.Body.Close()
-
+	if response.StatusCode == http.StatusNotFound {
+		return nil, &customerrors.NotFoundRequestError{
+			Uri: response.Request.RequestURI,
+			Err: err,
+		}
+	}
 	if response.StatusCode != http.StatusOK {
-		return nil, errors.New("memes not found")
+		return nil, &customerrors.DownloadRequestError{
+			Uri:        response.Request.RequestURI,
+			StatusCode: response.StatusCode,
+			Err:        err,
+		}
 	}
 
 	doc, err := goquery.NewDocumentFromReader(response.Body)
 	if err != nil {
-		return nil, errors.New("error parsing Body")
+		return nil, &customerrors.ParseDataError{
+			Err: err,
+		}
 	}
 
 	app := doc.Find("#app").First()
 	data, exists := app.Attr("data-page")
 	if !exists {
-		return nil, errors.New("data field not exists in html")
+		return nil, &customerrors.ParseDataError{
+			Err: fmt.Errorf("data-page not found in %s", response.Request.URL),
+		}
 	}
 
 	err = json.Unmarshal([]byte(data), &finalData)
 	if err != nil {
-		return nil, err
+		return nil, &customerrors.ParseDataError{
+			Err: fmt.Errorf("can't unmarshal JSON: %w", err),
+		}
 	}
 
 	memes := []model.Meme{}
