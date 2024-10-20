@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
+	"baneks.com/internal/api/memes/dto"
 	memesloader "baneks.com/internal/loaders/memes_loader"
-	"baneks.com/internal/memes/dto"
 	"github.com/labstack/echo/v4"
 )
 

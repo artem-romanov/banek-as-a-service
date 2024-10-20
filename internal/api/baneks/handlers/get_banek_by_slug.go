@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"baneks.com/internal/baneks/dto"
+	"baneks.com/internal/api/baneks/dto"
 	"baneks.com/internal/loaders/banekloader"
 	util "baneks.com/internal/utils"
 	"github.com/labstack/echo/v4"

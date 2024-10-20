@@ -1,9 +1,9 @@
 package main
 
 import (
-	"baneks.com/internal/baneks"
-	"baneks.com/internal/memes"
-	"baneks.com/internal/server"
+	server "baneks.com/internal/api"
+	"baneks.com/internal/api/baneks"
+	"baneks.com/internal/api/memes"
 )
 
 func main() {

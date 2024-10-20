@@ -1,7 +1,7 @@
 package memes
 
 import (
-	"baneks.com/internal/memes/handlers"
+	"baneks.com/internal/api/memes/handlers"
 	"github.com/labstack/echo/v4"
 )
 

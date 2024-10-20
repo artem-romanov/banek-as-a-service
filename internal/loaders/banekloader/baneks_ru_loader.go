@@ -77,7 +77,9 @@ func (loader *BaneksRuLoader) extractText(doc *goquery.Document) (string, error)
 	rawText.Contents().Each(func(i int, s *goquery.Selection) {
 		switch s.Nodes[0].Type {
 		case html.TextNode:
-			textBuilder.WriteString(s.Text())
+			text := s.Text()
+			text = strings.TrimSpace(text)
+			textBuilder.WriteString(text)
 		case html.ElementNode:
 			if s.Nodes[0].Data == "br" {
 				textBuilder.WriteString("\n")
