@@ -18,7 +18,7 @@ type HandlerRequest struct {
 func GetBanekBySlug(c echo.Context) error {
 	request := new(HandlerRequest)
 	if err := c.Bind(request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Incorrect slug")
+		customerrors.NewAppHTTPError(http.StatusBadRequest, "Incorrect slug", err)
 	}
 	if err := util.Validate(c, request); err != nil {
 		return err
@@ -29,9 +29,9 @@ func GetBanekBySlug(c echo.Context) error {
 		var notFoundError *customerrors.NotFoundRequestError
 		switch {
 		case errors.As(err, &notFoundError):
-			return echo.NewHTTPError(http.StatusNotFound, "Banek not found")
+			return customerrors.NewAppHTTPError(http.StatusNotFound, "Banek not found", err)
 		default:
-			return echo.NewHTTPError(http.StatusInternalServerError, "Banek download error")
+			return customerrors.NewAppHTTPError(http.StatusInternalServerError, "Banek download error", err)
 		}
 	}
 
