@@ -1,13 +1,13 @@
 package banekloader
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
 
+	customerrors "baneks.com/internal/custom_errors"
 	"baneks.com/internal/model"
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
@@ -28,20 +28,29 @@ func NewBanekRuLoader() *BaneksRuLoader {
 func (loader *BaneksRuLoader) GetRandomBanek() (model.Banek, error) {
 	response, err := http.Get(loader.siteUri + "/random")
 	if err != nil {
-		return model.Banek{}, err
+		return model.Banek{}, &customerrors.HttpNetworkError{
+			Err: err,
+			Uri: response.Request.RequestURI,
+		}
 	}
 	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		return model.Banek{}, errors.New(
-			fmt.Sprintf(
-				"error loading banek, status code: %d",
-				response.StatusCode,
-			),
-		)
+	if response.StatusCode == http.StatusNotFound {
+		return model.Banek{}, &customerrors.NotFoundRequestError{
+			Uri: response.Request.RequestURI,
+		}
 	}
+	if response.StatusCode != http.StatusOK {
+		return model.Banek{}, &customerrors.DownloadRequestError{
+			Uri:        response.Request.RequestURI,
+			StatusCode: response.StatusCode,
+		}
+	}
+
 	banek, err := loader.extractBanekFromBody(response.Body)
 	if err != nil {
-
+		return model.Banek{}, &customerrors.ParseDataError{
+			Err: fmt.Errorf("Banek parsing error: %w", err),
+		}
 	}
 
 	return banek, nil

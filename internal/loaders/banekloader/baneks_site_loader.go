@@ -1,13 +1,13 @@
 package banekloader
 
 import (
-	"errors"
+	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
+	customerrors "baneks.com/internal/custom_errors"
 	"baneks.com/internal/model"
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
@@ -28,19 +28,28 @@ func NewBaneksSiteLoader() *BaneksSiteLoader {
 func (loader *BaneksSiteLoader) GetRandomBanek() (model.Banek, error) {
 	randomBanekUri := loader.siteUri + "/random"
 	resp, err := http.Get(randomBanekUri)
-	body := resp.Body // making explicit body so defer make sense
-	defer body.Close()
 	if err != nil {
 		return model.Banek{}, err
 	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return model.Banek{}, &customerrors.NotFoundRequestError{
+			Uri: resp.Request.RequestURI,
+		}
+	}
 	if resp.StatusCode != http.StatusOK {
-		return model.Banek{}, errors.New("Banek couldn't be downloaded")
+		return model.Banek{}, &customerrors.DownloadRequestError{
+			Uri:        resp.Request.RequestURI,
+			StatusCode: resp.StatusCode,
+		}
 	}
 
-	banek, err := loader.parseBanekPage(body)
+	banek, err := loader.parseBanekPage(resp.Body)
 	if err != nil {
-		log.Printf("Random banek error download: %s", err.Error())
-		return model.Banek{}, errors.New("couldn't download Banek")
+		return model.Banek{}, &customerrors.ParseDataError{
+			Err: fmt.Errorf("Banek parsing error: %w", err),
+		}
 	}
 
 	return banek, nil
@@ -49,18 +58,32 @@ func (loader *BaneksSiteLoader) GetRandomBanek() (model.Banek, error) {
 func (loader *BaneksSiteLoader) GetBanekBySlug(slug string) (model.Banek, error) {
 	banekUri := banekSiteUri + "/" + slug
 	resp, err := http.Get(banekUri)
-	body := resp.Body // making explicit body so defer make sense
-	defer body.Close()
 	if err != nil {
-		return model.Banek{}, err
+		return model.Banek{}, &customerrors.HttpNetworkError{
+			Err: err,
+			Uri: resp.Request.RequestURI,
+		}
 	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return model.Banek{}, &customerrors.NotFoundRequestError{
+			Uri: resp.Request.RequestURI,
+		}
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return model.Banek{}, errors.New("Banek not found")
+		return model.Banek{}, &customerrors.DownloadRequestError{
+			Uri:        resp.Request.RequestURI,
+			StatusCode: resp.StatusCode,
+		}
 	}
 
 	banek, err := loader.parseBanekPage(resp.Body)
 	if err != nil {
-		return model.Banek{}, err
+		return model.Banek{}, &customerrors.ParseDataError{
+			Err: fmt.Errorf("banek parsing error: %w", err),
+		}
 	}
 
 	return banek, nil
@@ -69,13 +92,13 @@ func (loader *BaneksSiteLoader) GetBanekBySlug(slug string) (model.Banek, error)
 func (loader *BaneksSiteLoader) parseBanekPage(body io.Reader) (banek model.Banek, err error) {
 	html, err := goquery.NewDocumentFromReader(body)
 	if err != nil {
-		return model.Banek{}, errors.New("couldn't download Banek")
+		return model.Banek{}, err
 	}
 
 	banekText := loader.extractBanekText(html)
 	banekLikes, err := loader.extractBanekLikes(html)
 	if err != nil {
-		return model.Banek{}, errors.New("couldn't parse Banek")
+		return model.Banek{}, err
 	}
 
 	return model.Banek{
@@ -109,7 +132,7 @@ func (loader *BaneksSiteLoader) extractBanekLikes(html *goquery.Document) (int, 
 	likesStr := element.Text()
 	finalLikes, err := strconv.Atoi(likesStr)
 	if err != nil {
-		return -1, errors.New("can't parse likes")
+		return -1, err
 	}
 	return finalLikes, nil
 }

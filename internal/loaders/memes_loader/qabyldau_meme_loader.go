@@ -37,9 +37,8 @@ func NewQablydauMemeLoader() *QablydauMemeLoader {
 
 func (loader *QablydauMemeLoader) GetRandomMemes() ([]model.Meme, error) {
 	uri := loader.uri + "/random"
-	finalData := &JsonResponse{}
-	response, err := http.Get(uri)
 
+	response, err := http.Get(uri)
 	if err != nil {
 		return nil, &customerrors.HttpNetworkError{
 			Err: err,
@@ -47,17 +46,16 @@ func (loader *QablydauMemeLoader) GetRandomMemes() ([]model.Meme, error) {
 		}
 	}
 	defer response.Body.Close()
+
 	if response.StatusCode == http.StatusNotFound {
 		return nil, &customerrors.NotFoundRequestError{
 			Uri: response.Request.RequestURI,
-			Err: err,
 		}
 	}
 	if response.StatusCode != http.StatusOK {
 		return nil, &customerrors.DownloadRequestError{
 			Uri:        response.Request.RequestURI,
 			StatusCode: response.StatusCode,
-			Err:        err,
 		}
 	}
 
@@ -72,10 +70,11 @@ func (loader *QablydauMemeLoader) GetRandomMemes() ([]model.Meme, error) {
 	data, exists := app.Attr("data-page")
 	if !exists {
 		return nil, &customerrors.ParseDataError{
-			Err: fmt.Errorf("data-page not found in %s", response.Request.URL),
+			Err: fmt.Errorf("data-page attribute not found on %s", response.Request.RequestURI),
 		}
 	}
 
+	finalData := &JsonResponse{}
 	err = json.Unmarshal([]byte(data), &finalData)
 	if err != nil {
 		return nil, &customerrors.ParseDataError{
