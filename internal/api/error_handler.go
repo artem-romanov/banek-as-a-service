@@ -8,7 +8,6 @@ import (
 
 func CreateErrorHandler() func(error, echo.Context) {
 	return func(err error, c echo.Context) {
-		c.Logger().Debug(c.Request().URL)
 		code := http.StatusInternalServerError
 		he, ok := err.(*echo.HTTPError)
 		if ok {

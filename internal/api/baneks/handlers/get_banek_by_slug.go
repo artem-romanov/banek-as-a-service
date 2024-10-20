@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"baneks.com/internal/api/baneks/dto"
+	customerrors "baneks.com/internal/custom_errors"
 	"baneks.com/internal/loaders/banekloader"
 	util "baneks.com/internal/utils"
 	"github.com/labstack/echo/v4"
@@ -24,7 +26,13 @@ func GetBanekBySlug(c echo.Context) error {
 	loader := banekloader.NewBaneksSiteLoader()
 	banek, err := loader.GetBanekBySlug(request.Slug)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Banek not found")
+		var notFoundError *customerrors.NotFoundRequestError
+		switch {
+		case errors.As(err, &notFoundError):
+			return echo.NewHTTPError(http.StatusNotFound, "Banek not found")
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Banek download error")
+		}
 	}
 
 	return c.JSON(http.StatusOK, dto.BanekToResponse(&banek))

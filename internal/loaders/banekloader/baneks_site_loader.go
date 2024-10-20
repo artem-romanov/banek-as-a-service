@@ -35,12 +35,12 @@ func (loader *BaneksSiteLoader) GetRandomBanek() (model.Banek, error) {
 
 	if resp.StatusCode == http.StatusNotFound {
 		return model.Banek{}, &customerrors.NotFoundRequestError{
-			Uri: resp.Request.RequestURI,
+			Uri: resp.Request.URL.String(),
 		}
 	}
 	if resp.StatusCode != http.StatusOK {
 		return model.Banek{}, &customerrors.DownloadRequestError{
-			Uri:        resp.Request.RequestURI,
+			Uri:        resp.Request.URL.String(),
 			StatusCode: resp.StatusCode,
 		}
 	}
@@ -61,20 +61,20 @@ func (loader *BaneksSiteLoader) GetBanekBySlug(slug string) (model.Banek, error)
 	if err != nil {
 		return model.Banek{}, &customerrors.HttpNetworkError{
 			Err: err,
-			Uri: resp.Request.RequestURI,
+			Uri: resp.Request.URL.String(),
 		}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusNotFound {
 		return model.Banek{}, &customerrors.NotFoundRequestError{
-			Uri: resp.Request.RequestURI,
+			Uri: resp.Request.URL.String(),
 		}
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		return model.Banek{}, &customerrors.DownloadRequestError{
-			Uri:        resp.Request.RequestURI,
+			Uri:        resp.Request.URL.String(),
 			StatusCode: resp.StatusCode,
 		}
 	}

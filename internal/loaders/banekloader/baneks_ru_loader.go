@@ -30,18 +30,18 @@ func (loader *BaneksRuLoader) GetRandomBanek() (model.Banek, error) {
 	if err != nil {
 		return model.Banek{}, &customerrors.HttpNetworkError{
 			Err: err,
-			Uri: response.Request.RequestURI,
+			Uri: response.Request.URL.String(),
 		}
 	}
 	defer response.Body.Close()
 	if response.StatusCode == http.StatusNotFound {
 		return model.Banek{}, &customerrors.NotFoundRequestError{
-			Uri: response.Request.RequestURI,
+			Uri: response.Request.URL.String(),
 		}
 	}
 	if response.StatusCode != http.StatusOK {
 		return model.Banek{}, &customerrors.DownloadRequestError{
-			Uri:        response.Request.RequestURI,
+			Uri:        response.Request.URL.String(),
 			StatusCode: response.StatusCode,
 		}
 	}

@@ -42,19 +42,19 @@ func (loader *QablydauMemeLoader) GetRandomMemes() ([]model.Meme, error) {
 	if err != nil {
 		return nil, &customerrors.HttpNetworkError{
 			Err: err,
-			Uri: response.Request.RequestURI,
+			Uri: response.Request.URL.String(),
 		}
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode == http.StatusNotFound {
 		return nil, &customerrors.NotFoundRequestError{
-			Uri: response.Request.RequestURI,
+			Uri: response.Request.URL.String(),
 		}
 	}
 	if response.StatusCode != http.StatusOK {
 		return nil, &customerrors.DownloadRequestError{
-			Uri:        response.Request.RequestURI,
+			Uri:        response.Request.URL.String(),
 			StatusCode: response.StatusCode,
 		}
 	}
@@ -70,7 +70,7 @@ func (loader *QablydauMemeLoader) GetRandomMemes() ([]model.Meme, error) {
 	data, exists := app.Attr("data-page")
 	if !exists {
 		return nil, &customerrors.ParseDataError{
-			Err: fmt.Errorf("data-page attribute not found on %s", response.Request.RequestURI),
+			Err: fmt.Errorf("data-page attribute not found on %s", response.Request.URL.String()),
 		}
 	}
 
