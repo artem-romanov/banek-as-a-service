@@ -2,7 +2,13 @@ package customerrors
 
 import "fmt"
 
-const ()
+type InvalidInputError struct {
+	Err error
+}
+
+func (e *InvalidInputError) Error() string {
+	return fmt.Sprintf("Invalid input error, original error: %s", e.Err)
+}
 
 type HttpNetworkError struct {
 	Err error
