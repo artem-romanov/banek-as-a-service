@@ -1,9 +1,7 @@
 package server
 
 import (
-	"reflect"
-	"strings"
-
+	customvalidator "baneks.com/internal/utils/validator"
 	"github.com/go-playground/validator"
 )
 
@@ -19,16 +17,7 @@ func (cv *AppValidator) Validate(i interface{}) error {
 }
 
 func CreateValidator() *AppValidator {
-	v := validator.New()
-	v.RegisterTagNameFunc(func(fld reflect.StructField) string {
-		name := strings.SplitN(
-			fld.Tag.Get("json"), ",", 2)[0]
-		if name == "-" {
-			return ""
-		}
-		return name
-	})
-
+	v := customvalidator.CustomValidator
 	return &AppValidator{
 		validator: v,
 	}

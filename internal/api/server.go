@@ -13,6 +13,8 @@ func InitializeServer() *echo.Echo {
 	}))
 	server.HideBanner = true
 	server.HTTPErrorHandler = CreateErrorHandler()
-	server.Validator = CreateValidator()
+	validator := CreateValidator()
+	server.Validator = validator
+
 	return server
 }
