@@ -108,22 +108,39 @@ func (loader *BaneksSiteLoader) parseBanekPage(body io.Reader) (banek model.Bane
 }
 
 func (loader *BaneksSiteLoader) extractBanekText(doc *goquery.Document) string {
-	banekTextSelector := "article > section[itemprop='description'] > p"
 	var textBuilder strings.Builder
 
-	data := doc.Find(banekTextSelector).First()
-	data.Contents().Each(func(i int, s *goquery.Selection) {
-		switch s.Nodes[0].Type {
-		case html.TextNode:
-			textBuilder.WriteString(s.Text())
+	// banek.site section might contain multiple paragraphs (<p>)
+	banekSectionSelector := "article > section[itemprop='description']"
+
+	// we need only first selector, others are user comments
+	section := doc.Find(banekSectionSelector).First()
+	section.Contents().Each(func(i int, s *goquery.Selection) {
+		if s.Nodes[0].Type != html.ElementNode {
 			return
-		case html.ElementNode:
-			if goquery.NodeName(s) == "br" {
-				textBuilder.WriteString("\n")
-			}
 		}
+		if goquery.NodeName(s) != "p" {
+			return
+		}
+
+		// inside each <p> we should get text
+		// and add line breaks instead of <br />
+		s.Contents().Each(func(i int, s *goquery.Selection) {
+			switch s.Nodes[0].Type {
+			case html.TextNode:
+				textBuilder.WriteString(s.Text())
+				return
+			case html.ElementNode:
+				if goquery.NodeName(s) == "br" {
+					textBuilder.WriteString("\n")
+				}
+			}
+		})
+		textBuilder.WriteString("\n")
 	})
-	return textBuilder.String()
+
+	result := strings.TrimSpace(textBuilder.String())
+	return result
 }
 
 func (loader *BaneksSiteLoader) extractBanekLikes(html *goquery.Document) (int, error) {
