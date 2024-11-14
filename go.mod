@@ -5,6 +5,7 @@ go 1.23.2
 require (
 	github.com/PuerkitoBio/goquery v1.10.0
 	github.com/go-playground/validator v9.31.0+incompatible
+	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.12.0
 	golang.org/x/net v0.29.0
 	golang.org/x/time v0.5.0
