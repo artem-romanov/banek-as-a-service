@@ -28,8 +28,7 @@ func CreateValidateYearInbetween(yearMin int, yearMax func() int) (func(fl valid
 }
 
 func CreateValidateYearInbetweenNow(yearMin int) (func(fl validator.FieldLevel) bool, error) {
-	now := time.Now()
-	validator, error := CreateValidateYearInbetween(yearMin, now.Year)
+	validator, error := CreateValidateYearInbetween(yearMin, getNowYear)
 	if error != nil {
 		return nil, error
 	}
@@ -40,4 +39,9 @@ func CreateValidateMemeYear() (func(fl validator.FieldLevel) bool, error) {
 	// 2015 is the last available year on the website
 	// https://idiod.qabyldau.com/random/
 	return CreateValidateYearInbetweenNow(2015)
+}
+
+func getNowYear() int {
+	now := time.Now()
+	return now.Year()
 }
