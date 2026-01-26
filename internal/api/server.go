@@ -22,18 +22,26 @@ func InitializeServer(
 
 		LogValuesFunc: func(c *echo.Context, v middleware.RequestLoggerValues) error {
 			if v.Error != nil {
-				logger.LogAttrs(ctx,
-					slog.LevelError,
-					"REQUEST_ERROR",
+				attrs := []slog.Attr{
+					slog.String("method", v.Method),
 					slog.String("uri", v.URI),
 					slog.Int("status", v.Status),
-					slog.String("err", getError(v.Error)),
+				}
+
+				attrs = append(attrs, errorAttrs(v.Error)...)
+
+				logger.LogAttrs(
+					ctx,
+					slog.LevelError,
+					"REQUEST_ERROR",
+					attrs...,
 				)
 			} else {
 				logger.LogAttrs(
 					ctx,
 					slog.LevelInfo,
 					"REQUEST",
+					slog.String("method", v.Method),
 					slog.String("uri", v.URI),
 					slog.Int("status", v.Status),
 				)
@@ -49,16 +57,24 @@ func InitializeServer(
 	return server
 }
 
-func getError(e error) string {
+func errorAttrs(e error) []slog.Attr {
+	attrs := []slog.Attr{}
+
 	switch v := e.(type) {
 	case *customerrors.AppHttpError:
-		if v.Internal != nil {
-			return v.Internal.Error()
-		} else if v.Message != "" {
-			return v.MessageString()
+		if msg := v.MessageString(); msg != "" {
+			attrs = append(attrs, slog.String("err_message", msg))
+		} else {
+			attrs = append(attrs, slog.String("err_message", http.StatusText(v.Code)))
 		}
-		return http.StatusText(v.Code)
+
+		if v.Internal != nil {
+			attrs = append(attrs, slog.String("err_internal", v.Internal.Error()))
+		}
+
 	default:
-		return e.Error()
+		attrs = append(attrs, slog.String("err_message", e.Error()))
 	}
+
+	return attrs
 }

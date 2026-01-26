@@ -1,6 +1,7 @@
 package customerrors
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
@@ -35,8 +36,24 @@ func (e *AppHttpError) MessageString() string {
 	case fmt.Stringer:
 		return v.String()
 	default:
-		return "unknown message"
+		return ""
 	}
+}
+
+// MarshalJSON reimplements original marshal to support
+// inside echo DefaultHttpHandler.
+//
+// Because to print message we either need to use original HttpError (which doesn't have internal error),
+// or implement json.Marshaler
+func (e *AppHttpError) MarshalJSON() ([]byte, error) {
+	type Alias AppHttpError
+	return json.Marshal(&struct {
+		*Alias
+		Message string `json:"message"`
+	}{
+		Alias:   (*Alias)(e),
+		Message: e.MessageString(),
+	})
 }
 
 func NewAppHTTPError(code int, message interface{}, err error) *AppHttpError {

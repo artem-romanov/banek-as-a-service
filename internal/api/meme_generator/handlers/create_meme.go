@@ -41,7 +41,7 @@ func NewCreateMemeHandler(mem *memer.Memer) *CreateMemeHandler {
 func (h *CreateMemeHandler) CreateMeme(c *echo.Context) error {
 	file, err := c.FormFile("image")
 	if err != nil {
-		return customerrors.NewAppHTTPError(http.StatusNotFound, "File not found", err)
+		return customerrors.NewAppHTTPError(http.StatusBadRequest, "File not found", err)
 	}
 
 	imgType, err := validateImage(file)
@@ -56,7 +56,7 @@ func (h *CreateMemeHandler) CreateMeme(c *echo.Context) error {
 
 	text := c.FormValue("text")
 	if text == "" || strings.TrimSpace(text) == "" {
-		return customerrors.NewAppHTTPError(http.StatusNotFound, "Text not provided", nil)
+		return customerrors.NewAppHTTPError(http.StatusBadRequest, "Text not provided", nil)
 	}
 
 	resultImg, err := h.mem.Generate(imgSrc, strings.ToUpper(text))
