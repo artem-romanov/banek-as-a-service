@@ -2,7 +2,7 @@ package memes
 
 import (
 	"baneks.com/internal/api/memes/handlers"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func InitMemesRouter(group *echo.Group) *echo.Group {

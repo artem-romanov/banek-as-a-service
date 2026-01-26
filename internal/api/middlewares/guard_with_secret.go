@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	customerrors "baneks.com/internal/custom_errors"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 type GuardWithSecret struct {
@@ -19,19 +19,16 @@ func New(secretKey string) GuardWithSecret {
 }
 
 func (m *GuardWithSecret) GuardWithSecretMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
+	return func(c *echo.Context) error {
 		req := c.Request()
 		key := req.Header.Get("x-api-key")
 		if key != m.secretKey {
 			return customerrors.NewAppHTTPError(
 				http.StatusForbidden,
 				"Secret key not provided",
-				errors.New("Secret key not provided"),
+				errors.New("secret key not provided"),
 			)
 		}
-		if err := next(c); err != nil {
-			c.Error(err)
-		}
-		return nil
+		return next(c)
 	}
 }

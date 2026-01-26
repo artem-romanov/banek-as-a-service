@@ -8,14 +8,14 @@ import (
 	customerrors "baneks.com/internal/custom_errors"
 	"baneks.com/internal/loaders/banekloader"
 	customvalidator "baneks.com/internal/utils/validator"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 type HandlerRequest struct {
 	Slug string `param:"slug"`
 }
 
-func GetBanekBySlug(c echo.Context) error {
+func GetBanekBySlug(c *echo.Context) error {
 	requestParams := new(HandlerRequest)
 	if err := c.Bind(requestParams); err != nil {
 		customerrors.NewAppBindError(err)

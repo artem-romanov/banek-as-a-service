@@ -5,6 +5,8 @@ import (
 	"net/http"
 )
 
+// AppHttpError is re-implementation of original echo.HTTPError
+//
 // Yeah, it looks the same as echo.HTTPError, but hear me out.
 // *Here* "Internal" is an error which actually happend in the app.
 // Idea is to return AppHttpError instead of HTTPError from controllers.
@@ -20,6 +22,21 @@ func (e *AppHttpError) Error() string {
 		return fmt.Sprintf("code=%d, message=%v, internal=%v", e.Code, e.Message, e.Internal)
 	}
 	return fmt.Sprintf("code=%d, message=%v", e.Code, e.Message)
+}
+
+func (e *AppHttpError) StatusCode() int {
+	return e.Code
+}
+
+func (e *AppHttpError) MessageString() string {
+	switch v := e.Message.(type) {
+	case string:
+		return v
+	case fmt.Stringer:
+		return v.String()
+	default:
+		return "unknown message"
+	}
 }
 
 func NewAppHTTPError(code int, message interface{}, err error) *AppHttpError {
