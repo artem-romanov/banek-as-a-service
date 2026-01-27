@@ -35,7 +35,7 @@ func LoadConfig(filename string) (AppConfig, error) {
 
 	port, ok := env[SERVER_PORT_KEY]
 	if !ok {
-		port = ":8888"
+		port = "8888"
 	}
 
 	return AppConfig{
