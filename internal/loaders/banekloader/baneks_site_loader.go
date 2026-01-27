@@ -1,6 +1,7 @@
 package banekloader
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -25,9 +26,15 @@ func NewBaneksSiteLoader() *BaneksSiteLoader {
 	}
 }
 
-func (loader *BaneksSiteLoader) GetRandomBanek() (model.Banek, error) {
+func (loader *BaneksSiteLoader) GetRandomBanek(ctx context.Context) (model.Banek, error) {
 	randomBanekUri := loader.siteUri + "/random"
-	resp, err := http.Get(randomBanekUri)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", randomBanekUri, nil)
+	if err != nil {
+		return model.Banek{}, fmt.Errorf("error creating request: %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return model.Banek{}, err
 	}
@@ -35,12 +42,12 @@ func (loader *BaneksSiteLoader) GetRandomBanek() (model.Banek, error) {
 
 	if resp.StatusCode == http.StatusNotFound {
 		return model.Banek{}, &customerrors.NotFoundRequestError{
-			Uri: resp.Request.URL.String(),
+			Uri: req.URL.String(),
 		}
 	}
 	if resp.StatusCode != http.StatusOK {
 		return model.Banek{}, &customerrors.DownloadRequestError{
-			Uri:        resp.Request.URL.String(),
+			Uri:        req.URL.String(),
 			StatusCode: resp.StatusCode,
 		}
 	}
@@ -55,26 +62,31 @@ func (loader *BaneksSiteLoader) GetRandomBanek() (model.Banek, error) {
 	return banek, nil
 }
 
-func (loader *BaneksSiteLoader) GetBanekBySlug(slug string) (model.Banek, error) {
+func (loader *BaneksSiteLoader) GetBanekBySlug(ctx context.Context, slug string) (model.Banek, error) {
 	banekUri := banekSiteUri + "/" + slug
-	resp, err := http.Get(banekUri)
+	req, err := http.NewRequestWithContext(ctx, "GET", banekUri, nil)
+	if err != nil {
+		return model.Banek{}, fmt.Errorf("error creating request: %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return model.Banek{}, &customerrors.HttpNetworkError{
 			Err: err,
-			Uri: resp.Request.URL.String(),
+			Uri: req.URL.String(),
 		}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusNotFound {
 		return model.Banek{}, &customerrors.NotFoundRequestError{
-			Uri: resp.Request.URL.String(),
+			Uri: req.URL.String(),
 		}
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		return model.Banek{}, &customerrors.DownloadRequestError{
-			Uri:        resp.Request.URL.String(),
+			Uri:        req.URL.String(),
 			StatusCode: resp.StatusCode,
 		}
 	}

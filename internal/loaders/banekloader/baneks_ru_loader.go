@@ -1,6 +1,7 @@
 package banekloader
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -25,23 +26,30 @@ func NewBanekRuLoader() *BaneksRuLoader {
 	}
 }
 
-func (loader *BaneksRuLoader) GetRandomBanek() (model.Banek, error) {
-	response, err := http.Get(loader.siteUri + "/random")
+func (loader *BaneksRuLoader) GetRandomBanek(ctx context.Context) (model.Banek, error) {
+	uri := loader.siteUri + "/random"
+
+	req, err := http.NewRequestWithContext(ctx, "GET", uri, nil)
+	if err != nil {
+		return model.Banek{}, fmt.Errorf("error creating request: %w", err)
+	}
+
+	response, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return model.Banek{}, &customerrors.HttpNetworkError{
 			Err: err,
-			Uri: response.Request.URL.String(),
+			Uri: req.URL.String(),
 		}
 	}
 	defer response.Body.Close()
 	if response.StatusCode == http.StatusNotFound {
 		return model.Banek{}, &customerrors.NotFoundRequestError{
-			Uri: response.Request.URL.String(),
+			Uri: req.URL.String(),
 		}
 	}
 	if response.StatusCode != http.StatusOK {
 		return model.Banek{}, &customerrors.DownloadRequestError{
-			Uri:        response.Request.URL.String(),
+			Uri:        req.URL.String(),
 			StatusCode: response.StatusCode,
 		}
 	}
@@ -49,7 +57,7 @@ func (loader *BaneksRuLoader) GetRandomBanek() (model.Banek, error) {
 	banek, err := loader.extractBanekFromBody(response.Body)
 	if err != nil {
 		return model.Banek{}, &customerrors.ParseDataError{
-			Err: fmt.Errorf("Banek parsing error: %w", err),
+			Err: fmt.Errorf("banek parsing error: %w", err),
 		}
 	}
 

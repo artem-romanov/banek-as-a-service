@@ -16,6 +16,8 @@ type HandlerRequest struct {
 }
 
 func GetBanekBySlug(c *echo.Context) error {
+	ctx := c.Request().Context()
+
 	requestParams := new(HandlerRequest)
 	if err := c.Bind(requestParams); err != nil {
 		customerrors.NewAppBindError(err)
@@ -25,7 +27,7 @@ func GetBanekBySlug(c *echo.Context) error {
 		return httpError
 	}
 	loader := banekloader.NewBaneksSiteLoader()
-	banek, err := loader.GetBanekBySlug(requestParams.Slug)
+	banek, err := loader.GetBanekBySlug(ctx, requestParams.Slug)
 	if err != nil {
 		var notFoundError *customerrors.NotFoundRequestError
 		switch {

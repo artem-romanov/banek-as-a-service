@@ -11,9 +11,11 @@ import (
 )
 
 func GetRandomBanek(c *echo.Context) error {
+	ctx := c.Request().Context()
+
 	balancer := banekloader.GetBalancer()
 	banekLoader := balancer.GetLoader()
-	banek, err := banekLoader.GetRandomBanek()
+	banek, err := banekLoader.GetRandomBanek(ctx)
 	if err != nil {
 		var notFoundError *customerrors.NotFoundRequestError
 		switch {

@@ -1,6 +1,7 @@
 package memesloader
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -60,7 +61,7 @@ var DefaultGetRandomMemesConfig = RandomMemesConfig{}
 //
 // The function will also return an error if there was a problem with the
 // request or parsing the response.
-func (loader *QablydauMemeLoader) GetRandomMemesWithConfig(config RandomMemesConfig) ([]model.Meme, error) {
+func (loader *QablydauMemeLoader) GetRandomMemesWithConfig(ctx context.Context, config RandomMemesConfig) ([]model.Meme, error) {
 	// right now this is ok just to take year value without any checks
 	// validator of GetRandomMemes will check it for us
 	year := config.Year
@@ -68,19 +69,19 @@ func (loader *QablydauMemeLoader) GetRandomMemesWithConfig(config RandomMemesCon
 	// but in future config updates - check them there
 	// ...
 
-	return loader.getRandomMemes(year)
+	return loader.getRandomMemes(ctx, year)
 }
 
 // GetRandomMemes returns a slice of random memes from any year.
 //
 // This is just a wrapper around GetRandomMemesWithConfig with default config.
-func (loader *QablydauMemeLoader) GetRandomMemes() ([]model.Meme, error) {
-	return loader.GetRandomMemesWithConfig(DefaultGetRandomMemesConfig)
+func (loader *QablydauMemeLoader) GetRandomMemes(ctx context.Context) ([]model.Meme, error) {
+	return loader.GetRandomMemesWithConfig(ctx, DefaultGetRandomMemesConfig)
 }
 
 // Gets memes based on provided args.
 // This is the base functions, use provded wrappers to get memes.
-func (loader *QablydauMemeLoader) getRandomMemes(year int) ([]model.Meme, error) {
+func (loader *QablydauMemeLoader) getRandomMemes(ctx context.Context, year int) ([]model.Meme, error) {
 	var uri string
 	if year == 0 { // default unititilized value for a year
 		uri = loader.baseUri + "/random"
@@ -92,23 +93,28 @@ func (loader *QablydauMemeLoader) getRandomMemes(year int) ([]model.Meme, error)
 		uri = loader.baseUri + "/random/" + strconv.Itoa(year)
 	}
 
-	response, err := http.Get(uri)
+	req, err := http.NewRequestWithContext(ctx, "GET", uri, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+
+	response, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, &customerrors.HttpNetworkError{
 			Err: err,
-			Uri: response.Request.URL.String(),
+			Uri: req.URL.String(),
 		}
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode == http.StatusNotFound {
 		return nil, &customerrors.NotFoundRequestError{
-			Uri: response.Request.URL.String(),
+			Uri: req.URL.String(),
 		}
 	}
 	if response.StatusCode != http.StatusOK {
 		return nil, &customerrors.DownloadRequestError{
-			Uri:        response.Request.URL.String(),
+			Uri:        req.URL.String(),
 			StatusCode: response.StatusCode,
 		}
 	}

@@ -18,6 +18,7 @@ type GetRandomMemesRequest struct {
 }
 
 func GetRandomMemes(c *echo.Context) error {
+	ctx := c.Request().Context()
 	var requestParams GetRandomMemesRequest
 
 	err := c.Bind(&requestParams)
@@ -30,7 +31,7 @@ func GetRandomMemes(c *echo.Context) error {
 	}
 
 	var memeLoader memesloader.MemeLoader = memesloader.NewQablydauMemeLoader()
-	memes, err := memeLoader.GetRandomMemesWithConfig(memesloader.RandomMemesConfig{
+	memes, err := memeLoader.GetRandomMemesWithConfig(ctx, memesloader.RandomMemesConfig{
 		Year: requestParams.Year,
 	})
 	if err != nil {
