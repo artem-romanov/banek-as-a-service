@@ -13,7 +13,7 @@ import (
 	"baneks.com/internal/api/baneks"
 	memegenerator "baneks.com/internal/api/meme_generator"
 	"baneks.com/internal/api/memes"
-	"baneks.com/internal/config"
+	c "baneks.com/internal/config"
 	"baneks.com/pkg/memer"
 	"github.com/labstack/echo/v5"
 )
@@ -28,7 +28,7 @@ func main() {
 	)
 	defer cancel()
 
-	config, err := config.LoadConfig(".env")
+	config, err := c.LoadConfig(".env")
 	if err != nil {
 		log.Fatalf("Load config error: %v", err)
 		return
@@ -40,10 +40,12 @@ func main() {
 	}
 
 	// setup logger
+	loggerLevel := slog.LevelDebug
+	if config.Environment == c.EnvProd {
+		loggerLevel = slog.LevelInfo
+	}
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		// TODO: distinct between prod and dev,
-		// set error for prod, debug for dev
-		Level: slog.LevelDebug,
+		Level: loggerLevel,
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			if a.Key == slog.TimeKey {
 				t := a.Value.Time()
@@ -64,7 +66,7 @@ func main() {
 
 	serverConfig := echo.StartConfig{
 		Address:         ":" + config.Port,
-		GracefulTimeout: 1 * time.Second,
+		GracefulTimeout: 4 * time.Second,
 		HideBanner:      true,
 	}
 	if err := serverConfig.Start(ctx, server); err != nil {
