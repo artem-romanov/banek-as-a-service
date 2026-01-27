@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -23,12 +24,18 @@ var strToEnv = map[string]EnvType{
 // String lowercased for consistency.
 // It defaults to dev if string is not found.
 func ParseEnvType(s string) EnvType {
-	lowerS := strings.ToLower(s)
-
-	env, ok := strToEnv[lowerS]
-	if !ok {
+	if s == "" {
+		slog.Warn("Environment variable not set, using default (dev)")
 		return EnvDev
 	}
+
+	lowerS := strings.ToLower(s)
+	env, ok := strToEnv[lowerS]
+	if !ok {
+		slog.Warn("Environment variable not found, using default (dev)", "key", s)
+		return EnvDev
+	}
+
 	return env
 }
 
@@ -75,6 +82,7 @@ func LoadConfig(filename string) (AppConfig, error) {
 
 	port, ok := env[SERVER_PORT_KEY]
 	if !ok {
+		slog.Warn("Port is not set. Using default 8888.")
 		port = "8888"
 	}
 
