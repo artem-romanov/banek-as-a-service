@@ -8,17 +8,17 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
-type GuardWithSecret struct {
+type guardWithSecret struct {
 	secretKey string
 }
 
-func New(secretKey string) GuardWithSecret {
-	return GuardWithSecret{
+func NewGuardWithSecret(secretKey string) guardWithSecret {
+	return guardWithSecret{
 		secretKey: secretKey,
 	}
 }
 
-func (m *GuardWithSecret) GuardWithSecretMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *guardWithSecret) GuardWithSecretMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c *echo.Context) error {
 		req := c.Request()
 		key := req.Header.Get("x-api-key")

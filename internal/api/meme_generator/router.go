@@ -17,7 +17,7 @@ func InitMemeGeneratorRouter(group *echo.Group, memer *memer.Memer) *echo.Group 
 	)
 
 	createMemeHandler := handlers.NewCreateMemeHandler(memer)
-	mainGroup.POST("/", createMemeHandler.CreateMeme)
+	mainGroup.POST("", createMemeHandler.CreateMeme)
 
 	return mainGroup
 }

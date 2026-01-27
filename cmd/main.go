@@ -13,7 +13,6 @@ import (
 	"baneks.com/internal/api/baneks"
 	memegenerator "baneks.com/internal/api/meme_generator"
 	"baneks.com/internal/api/memes"
-	"baneks.com/internal/api/middlewares"
 	"baneks.com/internal/config"
 	"baneks.com/pkg/memer"
 	"github.com/labstack/echo/v5"
@@ -34,7 +33,7 @@ func main() {
 		log.Fatalf("Load config error: %v", err)
 		return
 	}
-	guard := middlewares.New(config.ApiKey)
+
 	m, err := memer.NewMemer(20, 20)
 	if err != nil {
 		log.Fatalf("Load memer error: %v", err)
@@ -55,11 +54,8 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
-	server := server.InitializeServer(ctx, logger)
+	server := server.InitializeServer(ctx, logger, config.ApiKey)
 	g := server.Group("/api")
-
-	// global middlewares init
-	g.Use(guard.GuardWithSecretMiddleware)
 
 	// router init
 	baneks.InitBanekRouter(g)
@@ -67,7 +63,7 @@ func main() {
 	memegenerator.InitMemeGeneratorRouter(g, m)
 
 	serverConfig := echo.StartConfig{
-		Address:         ":8888",
+		Address:         ":" + config.Port,
 		GracefulTimeout: 1 * time.Second,
 		HideBanner:      true,
 	}
