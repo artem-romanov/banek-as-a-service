@@ -1,11 +1,15 @@
 package memesloader
 
-import "baneks.com/internal/model"
+import (
+	"context"
+
+	"baneks.com/internal/model"
+)
 
 type RandomMemesConfig struct {
 	Year int
 }
 type MemeLoader interface {
-	GetRandomMemes() ([]model.Meme, error)
-	GetRandomMemesWithConfig(RandomMemesConfig) ([]model.Meme, error)
+	GetRandomMemes(context.Context) ([]model.Meme, error)
+	GetRandomMemesWithConfig(context.Context, RandomMemesConfig) ([]model.Meme, error)
 }

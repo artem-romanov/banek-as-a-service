@@ -8,7 +8,7 @@ import (
 	customerrors "baneks.com/internal/custom_errors"
 	memesloader "baneks.com/internal/loaders/memes_loader"
 	customvalidator "baneks.com/internal/utils/validator"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // Struct for handling the request parameters for the GetRandomMemes endpoint.
@@ -17,7 +17,8 @@ type GetRandomMemesRequest struct {
 	Year int `query:"year" validate:"omitempty,is-correct-meme-year"`
 }
 
-func GetRandomMemes(c echo.Context) error {
+func GetRandomMemes(c *echo.Context) error {
+	ctx := c.Request().Context()
 	var requestParams GetRandomMemesRequest
 
 	err := c.Bind(&requestParams)
@@ -30,7 +31,7 @@ func GetRandomMemes(c echo.Context) error {
 	}
 
 	var memeLoader memesloader.MemeLoader = memesloader.NewQablydauMemeLoader()
-	memes, err := memeLoader.GetRandomMemesWithConfig(memesloader.RandomMemesConfig{
+	memes, err := memeLoader.GetRandomMemesWithConfig(ctx, memesloader.RandomMemesConfig{
 		Year: requestParams.Year,
 	})
 	if err != nil {

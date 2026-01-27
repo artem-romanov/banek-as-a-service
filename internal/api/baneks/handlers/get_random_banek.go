@@ -7,13 +7,15 @@ import (
 	"baneks.com/internal/api/baneks/dto"
 	customerrors "baneks.com/internal/custom_errors"
 	"baneks.com/internal/loaders/banekloader"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
-func GetRandomBanek(c echo.Context) error {
+func GetRandomBanek(c *echo.Context) error {
+	ctx := c.Request().Context()
+
 	balancer := banekloader.GetBalancer()
 	banekLoader := balancer.GetLoader()
-	banek, err := banekLoader.GetRandomBanek()
+	banek, err := banekLoader.GetRandomBanek(ctx)
 	if err != nil {
 		var notFoundError *customerrors.NotFoundRequestError
 		switch {

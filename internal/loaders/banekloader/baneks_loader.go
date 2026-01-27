@@ -1,7 +1,11 @@
 package banekloader
 
-import "baneks.com/internal/model"
+import (
+	"context"
+
+	"baneks.com/internal/model"
+)
 
 type BaneksLoader interface {
-	GetRandomBanek() (model.Banek, error)
+	GetRandomBanek(context.Context) (model.Banek, error)
 }

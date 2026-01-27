@@ -2,9 +2,8 @@ package baneks
 
 import (
 	"baneks.com/internal/api/baneks/handlers"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"golang.org/x/time/rate"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 )
 
 func InitBanekRouter(group *echo.Group) *echo.Group {
@@ -13,7 +12,7 @@ func InitBanekRouter(group *echo.Group) *echo.Group {
 	// Adding rate limiter to avoid hitting banek servers too hard
 	mainGroup.Use(
 		middleware.RateLimiter(
-			middleware.NewRateLimiterMemoryStore(rate.Limit(5)),
+			middleware.NewRateLimiterMemoryStore(5),
 		),
 	)
 
