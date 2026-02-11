@@ -11,7 +11,8 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
-// Struct for handling the request parameters for the GetRandomMemes endpoint.
+// GetRandomMemesRequest handles request parameters for the GetRandomMemes endpoint.
+//
 // The 'year' parameter can be any integer from the current year to 2015. Non-required.
 type GetRandomMemesRequest struct {
 	Year int `query:"year" validate:"omitempty,is-correct-meme-year"`
@@ -35,13 +36,11 @@ func GetRandomMemes(c *echo.Context) error {
 		Year: requestParams.Year,
 	})
 	if err != nil {
-		var notFoundError *customerrors.NotFoundRequestError
-		switch {
-		case errors.As(err, &notFoundError):
+		if _, ok := errors.AsType[*customerrors.NotFoundRequestError](err); ok {
 			return customerrors.NewAppHTTPError(http.StatusNotFound, "Memes not found", err)
-		default:
-			return customerrors.NewAppHTTPError(http.StatusInternalServerError, "Memes loading error", err)
 		}
+
+		return customerrors.NewAppHTTPError(http.StatusInternalServerError, "Memes loading error", err)
 	}
 	responseMemes := []dto.MemeResponse{}
 

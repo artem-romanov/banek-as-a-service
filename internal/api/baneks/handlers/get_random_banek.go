@@ -17,13 +17,10 @@ func GetRandomBanek(c *echo.Context) error {
 	banekLoader := balancer.GetLoader()
 	banek, err := banekLoader.GetRandomBanek(ctx)
 	if err != nil {
-		var notFoundError *customerrors.NotFoundRequestError
-		switch {
-		case errors.As(err, &notFoundError):
+		if _, ok := errors.AsType[*customerrors.NotFoundRequestError](err); ok {
 			return customerrors.NewAppHTTPError(http.StatusNotFound, "Banek not found", err)
-		default:
-			return customerrors.NewAppHTTPError(http.StatusInternalServerError, "Banek download error", err)
 		}
+		return customerrors.NewAppHTTPError(http.StatusInternalServerError, "Banek download error", err)
 	}
 
 	banekResponse := dto.BanekToResponse(&banek)

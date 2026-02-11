@@ -29,13 +29,11 @@ func GetBanekBySlug(c *echo.Context) error {
 	loader := banekloader.NewBaneksSiteLoader()
 	banek, err := loader.GetBanekBySlug(ctx, requestParams.Slug)
 	if err != nil {
-		var notFoundError *customerrors.NotFoundRequestError
-		switch {
-		case errors.As(err, &notFoundError):
+		if _, ok := errors.AsType[*customerrors.NotFoundRequestError](err); ok {
 			return customerrors.NewAppHTTPError(http.StatusNotFound, "Banek not found", err)
-		default:
-			return customerrors.NewAppHTTPError(http.StatusInternalServerError, "Banek download error", err)
 		}
+
+		return customerrors.NewAppHTTPError(http.StatusInternalServerError, "Banek download error", err)
 	}
 
 	return c.JSON(http.StatusOK, dto.BanekToResponse(&banek))
