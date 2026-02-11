@@ -22,6 +22,9 @@ func InitializeValidator() *validator.Validate {
 	v := validator.New()
 	// Allow validator read data from json annotation field.
 	// This allows us to not send struct fields to the user.
+	//
+	// e.g.:  struct{ OuterUsername: string `json:"username"`} will send "username", not "OuterUsername".
+	// This helps not to leak implementation details.
 	v.RegisterTagNameFunc(func(fld reflect.StructField) string {
 		name := strings.SplitN(
 			fld.Tag.Get("json"), ",", 2)[0]
