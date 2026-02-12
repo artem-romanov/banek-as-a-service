@@ -49,7 +49,7 @@ func main() {
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			if a.Key == slog.TimeKey {
 				t := a.Value.Time()
-				a.Value = slog.StringValue(t.Format("2006-01-02 15:05:05.00"))
+				a.Value = slog.StringValue(t.Format("2006-01-02 15:04:05"))
 			}
 			return a
 		},
