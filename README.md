@@ -14,7 +14,7 @@
 
 ## Технологии
 
-- [Golang 1.25](https://go.dev/)
+- [Golang 1.26](https://go.dev/)
 - [Echo v5](https://echo.labstack.com/)
 
 ## Использование
