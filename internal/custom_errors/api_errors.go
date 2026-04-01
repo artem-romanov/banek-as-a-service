@@ -47,13 +47,7 @@ func (e *AppHttpError) MessageString() string {
 // or implement json.Marshaler
 func (e *AppHttpError) MarshalJSON() ([]byte, error) {
 	type Alias AppHttpError
-	return json.Marshal(&struct {
-		*Alias
-		Message string `json:"message"`
-	}{
-		Alias:   (*Alias)(e),
-		Message: e.MessageString(),
-	})
+	return json.Marshal((*Alias)(e))
 }
 
 func NewAppHTTPError(code int, message interface{}, err error) *AppHttpError {

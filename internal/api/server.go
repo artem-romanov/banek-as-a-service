@@ -2,8 +2,8 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
-	"net/http"
 
 	"baneks.com/internal/api/middlewares"
 	customerrors "baneks.com/internal/custom_errors"
@@ -31,11 +31,17 @@ func errorAttrs(e error) []slog.Attr {
 
 	switch v := e.(type) {
 	case *customerrors.AppHttpError:
-		if msg := v.MessageString(); msg != "" {
-			attrs = append(attrs, slog.String("err_message", msg))
+		var msg string
+		errBytes, err := v.MarshalJSON()
+		if err != nil {
+			// если сериализация упала — выводим fallback
+			msg = fmt.Sprintf("Failed to marshal AppHttpError, code=%d: %v", v.Code, err)
 		} else {
-			attrs = append(attrs, slog.String("err_message", http.StatusText(v.Code)))
+			msg = string(errBytes)
 		}
+
+		attrs = append(attrs, slog.String("err_message", msg))
+		attrs = append(attrs, slog.Int("err_code", v.Code))
 
 		if v.Internal != nil {
 			attrs = append(attrs, slog.String("err_internal", v.Internal.Error()))
