@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	customerrors "baneks.com/internal/custom_errors"
-	"github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
 )
 
 type ValidationError struct {

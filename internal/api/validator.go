@@ -2,7 +2,7 @@ package server
 
 import (
 	customvalidator "baneks.com/internal/utils/validator"
-	"github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
 )
 
 type AppValidator struct {

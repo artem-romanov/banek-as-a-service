@@ -2,9 +2,13 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
+	"log/slog"
 	"net/http"
+	"time"
 
 	"baneks.com/internal/api/baneks/dto"
+	"baneks.com/internal/api/middlewares"
 	customerrors "baneks.com/internal/custom_errors"
 	"baneks.com/internal/loaders/banekloader"
 	customvalidator "baneks.com/internal/utils/validator"
@@ -18,9 +22,27 @@ type HandlerRequest struct {
 func GetBanekBySlug(c *echo.Context) error {
 	ctx := c.Request().Context()
 
+	fmt.Println("inside slug!")
+	slog.Info("fuck!")
+	data, ok := middlewares.GetUser(ctx)
+	if !ok {
+		fmt.Println("data is nil:", data)
+	} else {
+		fmt.Println("data is:", data)
+	}
+
+	timeCh := time.After(time.Second * 4)
+
+	select {
+	case <-ctx.Done():
+		return customerrors.NewAppHTTPError(500, "canceled context", errors.New("ctx canceled"))
+	case <-timeCh:
+		// noop
+	}
+
 	requestParams := new(HandlerRequest)
 	if err := c.Bind(requestParams); err != nil {
-		customerrors.NewAppBindError(err)
+		return customerrors.NewAppBindError(err)
 	}
 	httpError := customvalidator.ValidateRequest(c.Validate, requestParams)
 	if httpError != nil {

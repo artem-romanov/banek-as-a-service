@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
 )
 
 // / CUSTOM VALIDATION RULES
