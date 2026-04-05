@@ -13,9 +13,9 @@ import (
 // Idea is to return AppHttpError instead of HTTPError from controllers.
 // Send Message to user *and* log Internal error with all nifty things such as request uri.
 type AppHttpError struct {
-	Code     int         `json:"-"`
-	Message  interface{} `json:"message"`
-	Internal error       `json:"-"`
+	Code     int   `json:"-"`
+	Message  any   `json:"message"`
+	Internal error `json:"-"`
 }
 
 func (e *AppHttpError) Error() string {
@@ -50,7 +50,7 @@ func (e *AppHttpError) MarshalJSON() ([]byte, error) {
 	return json.Marshal((*Alias)(e))
 }
 
-func NewAppHTTPError(code int, message interface{}, err error) *AppHttpError {
+func NewAppHTTPError(code int, message any, err error) *AppHttpError {
 	return &AppHttpError{
 		Code:     code,
 		Message:  message,

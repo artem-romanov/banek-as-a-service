@@ -68,31 +68,28 @@ func initMiddlewares(
 		LogStatus: true,
 
 		LogValuesFunc: func(c *echo.Context, v middleware.RequestLoggerValues) error {
-			if v.Error != nil {
-				attrs := []slog.Attr{
-					slog.String("method", v.Method),
-					slog.String("uri", v.URI),
-					slog.Int("status", v.Status),
-				}
-
-				attrs = append(attrs, errorAttrs(v.Error)...)
-
-				logger.LogAttrs(
-					ctx,
-					slog.LevelError,
-					"REQUEST_ERROR",
-					attrs...,
-				)
-			} else {
-				logger.LogAttrs(
-					ctx,
-					slog.LevelInfo,
-					"REQUEST",
-					slog.String("method", v.Method),
-					slog.String("uri", v.URI),
-					slog.Int("status", v.Status),
-				)
+			attrs := []slog.Attr{
+				slog.String("method", v.Method),
+				slog.String("uri", v.URI),
+				slog.Int("status", v.Status),
 			}
+
+			var level slog.Level
+			var msg string
+
+			// Ошибки и статус >= 500 -> Error, иначе Info
+			if v.Error != nil || (v.Status >= 500 && v.Status <= 599) {
+				level = slog.LevelError
+				if v.Error != nil {
+					attrs = append(attrs, errorAttrs(v.Error)...)
+				}
+				msg = "REQUEST_ERROR"
+			} else {
+				level = slog.LevelInfo
+				msg = "REQUEST"
+			}
+
+			logger.LogAttrs(ctx, level, msg, attrs...)
 			return nil
 		},
 	}))
