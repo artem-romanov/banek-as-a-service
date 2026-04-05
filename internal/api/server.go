@@ -77,16 +77,20 @@ func initMiddlewares(
 			var level slog.Level
 			var msg string
 
-			// Ошибки и статус >= 500 -> Error, иначе Info
-			if v.Error != nil || (v.Status >= 500 && v.Status <= 599) {
+			switch {
+			case v.Status >= 500:
 				level = slog.LevelError
-				if v.Error != nil {
-					attrs = append(attrs, errorAttrs(v.Error)...)
-				}
-				msg = "REQUEST_ERROR"
-			} else {
+				msg = "REQUEST_SERVER_ERROR"
+			case v.Status >= 400:
 				level = slog.LevelInfo
-				msg = "REQUEST"
+				msg = "REQUEST_CLIENT_ERROR"
+			default:
+				level = slog.LevelInfo
+				msg = "REQUEST_OK"
+			}
+
+			if v.Error != nil {
+				attrs = append(attrs, errorAttrs(v.Error)...)
 			}
 
 			logger.LogAttrs(ctx, level, msg, attrs...)
