@@ -4,25 +4,28 @@ import (
 	"context"
 	"log"
 	"log/slog"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	server "baneks.com/internal/api"
+	api "baneks.com/internal/api"
+	"baneks.com/internal/api/ai"
 	"baneks.com/internal/api/baneks"
 	memegenerator "baneks.com/internal/api/meme_generator"
 	"baneks.com/internal/api/memes"
 	c "baneks.com/internal/config"
+	aiPkg "baneks.com/pkg/ai"
 	"baneks.com/pkg/memer"
 	"github.com/labstack/echo/v5"
+	"golang.org/x/net/proxy"
 )
 
 func main() {
-	globalCtx := context.Background()
-
 	ctx, cancel := signal.NotifyContext(
-		globalCtx,
+		context.Background(),
 		os.Interrupt,
 		syscall.SIGTERM,
 	)
@@ -56,13 +59,19 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
-	server := server.InitializeServer(ctx, logger, config.ApiKey)
+	aiClient, err := initAiClient(config.CerebrusToken, "127.0.0.1:1080")
+	if err != nil {
+		log.Fatalf("Create aiClient error: %v", err)
+	}
+
+	server := api.InitializeServer(ctx, logger, config.ApiKey)
 	g := server.Group("/api")
 
 	// router init
 	baneks.InitBanekRouter(g)
 	memes.InitMemesRouter(g)
 	memegenerator.InitMemeGeneratorRouter(g, m)
+	ai.InitAiRouter(g, aiClient)
 
 	serverConfig := echo.StartConfig{
 		Address:         ":" + config.Port,
@@ -72,4 +81,34 @@ func main() {
 	if err := serverConfig.Start(ctx, server); err != nil {
 		server.Logger.Error("failed to start server", "error", err)
 	}
+}
+
+func initAiClient(token, proxyAddr string) (*aiPkg.AiClient, error) {
+	dialer, err := proxy.SOCKS5("tcp", proxyAddr, nil, proxy.Direct)
+	if err != nil {
+		return nil, err
+	}
+
+	dialContext := func(ctx context.Context, network, addr string) (net.Conn, error) {
+		if cd, ok := dialer.(proxy.ContextDialer); ok {
+			return cd.DialContext(ctx, network, addr)
+		}
+		return dialer.Dial(network, addr)
+	}
+
+	transport := &http.Transport{
+		DialContext:           dialContext,
+		TLSHandshakeTimeout:   10 * time.Second,
+		IdleConnTimeout:       90 * time.Second,
+		MaxIdleConns:          100,
+		MaxIdleConnsPerHost:   10,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
+	httpClient := &http.Client{
+		Transport: transport,
+		Timeout:   30 * time.Second,
+	}
+
+	return aiPkg.NewAiClient(httpClient, token, 3, nil)
 }

@@ -50,6 +50,8 @@ type AppConfig struct {
 
 	// Application environment. Defaults to dev.
 	Environment EnvType
+
+	CerebrusToken string
 }
 
 var (
@@ -59,6 +61,8 @@ var (
 	ENV_KEY string = "ENV"
 
 	SERVER_PORT_KEY string = "PORT"
+
+	CEREBRUS_TOKEN string = "CEREBRUS_TOKEN"
 )
 
 var (
@@ -86,9 +90,16 @@ func LoadConfig(filename string) (AppConfig, error) {
 		port = "8888"
 	}
 
+	cerebrusToken, ok := env[CEREBRUS_TOKEN]
+	if !ok {
+		slog.Warn("Cerebrus token is not set in env. AI wont work!")
+		cerebrusToken = ""
+	}
+
 	return AppConfig{
-		ApiKey:      apiKey,
-		Port:        port,
-		Environment: e,
+		ApiKey:        apiKey,
+		Port:          port,
+		Environment:   e,
+		CerebrusToken: cerebrusToken,
 	}, nil
 }
