@@ -55,7 +55,7 @@ func (loader *BaneksSiteLoader) GetRandomBanek(ctx context.Context) (model.Banek
 	banek, err := loader.parseBanekPage(resp.Body)
 	if err != nil {
 		return model.Banek{}, &customerrors.ParseDataError{
-			Err: fmt.Errorf("Banek parsing error: %w", err),
+			Err: fmt.Errorf("banek parsing error: %w", err),
 		}
 	}
 

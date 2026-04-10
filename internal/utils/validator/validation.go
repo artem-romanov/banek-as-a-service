@@ -74,7 +74,7 @@ func ValidateRequest(checker validationFunc, data interface{}) *customerrors.App
 	}
 
 	if verr, ok := err.(validator.ValidationErrors); ok {
-		return customerrors.NewAppHTTPError(http.StatusBadRequest, GetFancyErrors(&verr), fmt.Errorf("Request validation error: %s", err))
+		return customerrors.NewAppHTTPError(http.StatusBadRequest, GetFancyErrors(&verr), fmt.Errorf("request validation error: %s", err))
 	}
 
 	return customerrors.NewAppHTTPError(http.StatusBadRequest, err.Error(), err)

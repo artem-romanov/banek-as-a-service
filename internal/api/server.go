@@ -5,25 +5,46 @@ import (
 	"fmt"
 	"log/slog"
 
+	"baneks.com/internal/api/ai"
+	"baneks.com/internal/api/baneks"
+	memegenerator "baneks.com/internal/api/meme_generator"
+	"baneks.com/internal/api/memes"
 	"baneks.com/internal/api/middlewares"
 	customerrors "baneks.com/internal/custom_errors"
+	aiPkg "baneks.com/pkg/ai"
+	"baneks.com/pkg/memer"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 )
+
+type Dependencies struct {
+	Memer    *memer.Memer
+	AiClient *aiPkg.AiClient
+}
 
 func InitializeServer(
 	ctx context.Context,
 	logger *slog.Logger,
 	guardApiKey string,
+	deps Dependencies,
 ) *echo.Echo {
 	server := echo.New()
 	initMiddlewares(ctx, server, logger, guardApiKey)
 
+	initApiGroup(server, &deps)
+
 	server.Logger = slog.Default()
 	validator := CreateValidator()
 	server.Validator = validator
-
 	return server
+}
+
+func initApiGroup(s *echo.Echo, deps *Dependencies) {
+	g := s.Group("/api")
+	baneks.InitBanekRouter(g)
+	memes.InitMemesRouter(g)
+	memegenerator.InitMemeGeneratorRouter(g, deps.Memer)
+	ai.InitAiRouter(g, deps.AiClient)
 }
 
 func errorAttrs(e error) []slog.Attr {

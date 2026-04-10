@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log"
 	"log/slog"
 	"net"
@@ -12,11 +14,7 @@ import (
 	"time"
 
 	api "baneks.com/internal/api"
-	"baneks.com/internal/api/ai"
-	"baneks.com/internal/api/baneks"
-	memegenerator "baneks.com/internal/api/meme_generator"
-	"baneks.com/internal/api/memes"
-	c "baneks.com/internal/config"
+	cfg "baneks.com/internal/config"
 	aiPkg "baneks.com/pkg/ai"
 	"baneks.com/pkg/memer"
 	"github.com/labstack/echo/v5"
@@ -31,47 +29,25 @@ func main() {
 	)
 	defer cancel()
 
-	config, err := c.LoadConfig(".env")
+	config, err := cfg.LoadConfig(".env")
 	if err != nil {
 		log.Fatalf("Load config error: %v", err)
 		return
 	}
 
-	m, err := memer.NewMemer(20, 20)
-	if err != nil {
-		log.Fatalf("Load memer error: %v", err)
-	}
-
-	// setup logger
-	loggerLevel := slog.LevelDebug
-	if config.Environment == c.EnvProd {
-		loggerLevel = slog.LevelInfo
-	}
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: loggerLevel,
-		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-			if a.Key == slog.TimeKey {
-				t := a.Value.Time()
-				a.Value = slog.StringValue(t.Format("2006-01-02 15:04:05"))
-			}
-			return a
-		},
-	}))
+	logger := setupLogger(&config)
 	slog.SetDefault(logger)
 
-	aiClient, err := initAiClient(config.CerebrusToken, "127.0.0.1:1080")
+	deps, err := initializeDependencies(&config)
 	if err != nil {
-		log.Fatalf("Create aiClient error: %v", err)
+		slog.Error("dependencies initialization fail", "err", err)
+		os.Exit(1)
 	}
 
-	server := api.InitializeServer(ctx, logger, config.ApiKey)
-	g := server.Group("/api")
-
-	// router init
-	baneks.InitBanekRouter(g)
-	memes.InitMemesRouter(g)
-	memegenerator.InitMemeGeneratorRouter(g, m)
-	ai.InitAiRouter(g, aiClient)
+	server := api.InitializeServer(ctx, logger, config.ApiKey, api.Dependencies{
+		Memer:    deps.Memer,
+		AiClient: deps.AiClient,
+	})
 
 	serverConfig := echo.StartConfig{
 		Address:         ":" + config.Port,
@@ -81,6 +57,34 @@ func main() {
 	if err := serverConfig.Start(ctx, server); err != nil {
 		server.Logger.Error("failed to start server", "error", err)
 	}
+}
+
+type AppDependencies struct {
+	Memer    *memer.Memer
+	AiClient *aiPkg.AiClient
+}
+
+func initializeDependencies(config *cfg.AppConfig) (*AppDependencies, error) {
+	errs := make([]error, 0)
+
+	m, err := memer.NewMemer(20, 20)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("memer init fail: %w", err))
+	}
+
+	aiClient, err := initAiClient(config.CerebrusToken, "127.0.0.1:1080")
+	if err != nil {
+		errs = append(errs, fmt.Errorf("aiClient init fail: %w", err))
+	}
+
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
+	}
+
+	return &AppDependencies{
+		Memer:    m,
+		AiClient: aiClient,
+	}, nil
 }
 
 func initAiClient(token, proxyAddr string) (*aiPkg.AiClient, error) {
@@ -111,4 +115,21 @@ func initAiClient(token, proxyAddr string) (*aiPkg.AiClient, error) {
 	}
 
 	return aiPkg.NewAiClient(httpClient, token, 3, nil)
+}
+
+func setupLogger(config *cfg.AppConfig) *slog.Logger {
+	loggerLevel := slog.LevelDebug
+	if config.Environment == cfg.EnvProd {
+		loggerLevel = slog.LevelInfo
+	}
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: loggerLevel,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.TimeKey {
+				t := a.Value.Time()
+				a.Value = slog.StringValue(t.Format("2006-01-02 15:04:05"))
+			}
+			return a
+		},
+	}))
 }
