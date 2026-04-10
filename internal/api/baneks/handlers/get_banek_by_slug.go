@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"baneks.com/internal/api/baneks/dto"
 	customerrors "baneks.com/internal/custom_errors"
@@ -18,16 +17,6 @@ type HandlerRequest struct {
 
 func GetBanekBySlug(c *echo.Context) error {
 	ctx := c.Request().Context()
-
-	timeCh := time.After(time.Second * 4)
-
-	select {
-	case <-ctx.Done():
-		return customerrors.NewAppHTTPError(500, "canceled context", errors.New("ctx canceled"))
-	case <-timeCh:
-		// noop
-	}
-
 	requestParams := new(HandlerRequest)
 	if err := c.Bind(requestParams); err != nil {
 		return customerrors.NewAppBindError(err)
