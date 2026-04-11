@@ -11,6 +11,7 @@
 - [x] Получение конкретного анекдота по slug из banek.site (api/baneks/:slug)
 - [x] Получение случайных мемов (api/memes/random?year={year})
 - [x] Создание мема при помощи POST запроса на /api/meme-generator
+- [x] Апи для работы с ИИ (Groq и Cerebras), позволяет создавать разные провайдеры.
 
 ## Технологии
 
@@ -28,16 +29,16 @@ go mod tidy
 - Запустите:
 
 ```sh
-go run cmd/main.go
+go run cmd/app/main.go
 ```
 
 - Или соберите:
 
 ```sh
-go build cmd/main.go
+go build cmd/app/main.go
 ```
 
-**Так же можно через MAKE.**
+**Но лучше через MAKE.**
 
 `make run` для запуска
 `make run-{os}` для билда
