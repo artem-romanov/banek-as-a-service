@@ -17,7 +17,10 @@ func InitAiRouter(group *echo.Group, aiClient *aiclient.AiClient) *echo.Group {
 	)
 
 	chatHandler := handlers.NewChatWithAiHandler(aiClient)
+	isThisTrueHandler := handlers.NewIsThisTrueHandler(aiClient)
+
 	mainGroup.POST("/chat", chatHandler.ChatWithAi)
+	mainGroup.POST("/is-true", isThisTrueHandler.IsThisTrueHandler)
 
 	return mainGroup
 }

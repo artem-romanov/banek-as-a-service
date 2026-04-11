@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
-type handlerRequest struct {
+type chatWithAiRequest struct {
 	Text string `json:"text" validate:"required,max=100"`
 }
 
@@ -25,14 +25,14 @@ func NewChatWithAiHandler(aiClient *aiClient.AiClient) *ChatWithAiHandler {
 }
 
 func (h *ChatWithAiHandler) ChatWithAi(c *echo.Context) error {
-	params := &handlerRequest{}
+	params := &chatWithAiRequest{}
 
 	if err := c.Bind(params); err != nil {
 		return customerrors.NewAppBindError(err)
 	}
 
 	if err := customvalidator.ValidateRequest(c.Validate, params); err != nil {
-		return customerrors.NewAppHTTPError(http.StatusForbidden, err, nil)
+		return customerrors.NewAppHTTPError(http.StatusBadRequest, err, nil)
 	}
 
 	resp, err := h.aiClient.Chat(c.Request().Context(), aiClient.ChatRequest{
@@ -50,7 +50,7 @@ func (h *ChatWithAiHandler) ChatWithAi(c *echo.Context) error {
 	})
 	if err != nil {
 		if errors.Is(err, aiClient.ErrRateLimitExceeded) {
-			return customerrors.NewAppHTTPError(http.StatusTooManyRequests, "To many requests", err)
+			return customerrors.NewAppHTTPError(http.StatusTooManyRequests, "Too many requests", err)
 		}
 
 		return customerrors.NewAppHTTPError(http.StatusInternalServerError, "Something went wrong", err)
