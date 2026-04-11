@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	customerrors "baneks.com/internal/custom_errors"
@@ -48,6 +49,10 @@ func (h *ChatWithAiHandler) ChatWithAi(c *echo.Context) error {
 		},
 	})
 	if err != nil {
+		if errors.Is(err, aiClient.ErrRateLimitExceeded) {
+			return customerrors.NewAppHTTPError(http.StatusTooManyRequests, "To many requests", err)
+		}
+
 		return customerrors.NewAppHTTPError(http.StatusInternalServerError, "Something went wrong", err)
 	}
 

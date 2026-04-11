@@ -72,7 +72,14 @@ func initializeDependencies(config *cfg.AppConfig) (*AppDependencies, error) {
 		errs = append(errs, fmt.Errorf("memer init fail: %w", err))
 	}
 
-	aiClient, err := initAiClient(config.CerebrusToken, "127.0.0.1:1080")
+	aiProvider := aiPkg.NewGroqOss120Provider(config.GroqToken)
+
+	proxyAddr := ""
+	if config.Environment == cfg.EnvProd {
+		proxyAddr = "127.0.0.1:1080"
+	}
+
+	aiClient, err := initAiClient(aiProvider, proxyAddr)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("aiClient init fail: %w", err))
 	}
@@ -86,27 +93,38 @@ func initializeDependencies(config *cfg.AppConfig) (*AppDependencies, error) {
 		AiClient: aiClient,
 	}, nil
 }
+func initAiClient(provider aiPkg.Provider, proxyAddr string) (*aiPkg.AiClient, error) {
+	var transport *http.Transport
 
-func initAiClient(token, proxyAddr string) (*aiPkg.AiClient, error) {
-	dialer, err := proxy.SOCKS5("tcp", proxyAddr, nil, proxy.Direct)
-	if err != nil {
-		return nil, err
-	}
-
-	dialContext := func(ctx context.Context, network, addr string) (net.Conn, error) {
-		if cd, ok := dialer.(proxy.ContextDialer); ok {
-			return cd.DialContext(ctx, network, addr)
+	if proxyAddr != "" {
+		dialer, err := proxy.SOCKS5("tcp", proxyAddr, nil, proxy.Direct)
+		if err != nil {
+			return nil, err
 		}
-		return dialer.Dial(network, addr)
-	}
 
-	transport := &http.Transport{
-		DialContext:           dialContext,
-		TLSHandshakeTimeout:   10 * time.Second,
-		IdleConnTimeout:       90 * time.Second,
-		MaxIdleConns:          100,
-		MaxIdleConnsPerHost:   10,
-		ExpectContinueTimeout: 1 * time.Second,
+		dialContext := func(ctx context.Context, network, addr string) (net.Conn, error) {
+			if cd, ok := dialer.(proxy.ContextDialer); ok {
+				return cd.DialContext(ctx, network, addr)
+			}
+			return dialer.Dial(network, addr)
+		}
+
+		transport = &http.Transport{
+			DialContext:           dialContext,
+			TLSHandshakeTimeout:   10 * time.Second,
+			IdleConnTimeout:       90 * time.Second,
+			MaxIdleConns:          100,
+			MaxIdleConnsPerHost:   10,
+			ExpectContinueTimeout: 1 * time.Second,
+		}
+	} else {
+		transport = &http.Transport{
+			TLSHandshakeTimeout:   10 * time.Second,
+			IdleConnTimeout:       90 * time.Second,
+			MaxIdleConns:          100,
+			MaxIdleConnsPerHost:   10,
+			ExpectContinueTimeout: 1 * time.Second,
+		}
 	}
 
 	httpClient := &http.Client{
@@ -114,7 +132,7 @@ func initAiClient(token, proxyAddr string) (*aiPkg.AiClient, error) {
 		Timeout:   30 * time.Second,
 	}
 
-	return aiPkg.NewAiClient(httpClient, token, 3, nil)
+	return aiPkg.NewAiClient(httpClient, provider, 3)
 }
 
 func setupLogger(config *cfg.AppConfig) *slog.Logger {

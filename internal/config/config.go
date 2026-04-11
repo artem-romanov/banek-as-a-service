@@ -52,6 +52,8 @@ type AppConfig struct {
 	Environment EnvType
 
 	CerebrusToken string
+
+	GroqToken string
 }
 
 var (
@@ -63,10 +65,8 @@ var (
 	SERVER_PORT_KEY string = "PORT"
 
 	CEREBRUS_TOKEN string = "CEREBRUS_TOKEN"
-)
 
-var (
-	ErrApiKeyNotFound error = fmt.Errorf("API KEY not provided in .env")
+	GROQ_TOKEN string = "GROQ_TOKEN"
 )
 
 func LoadConfig(filename string) (AppConfig, error) {
@@ -77,7 +77,7 @@ func LoadConfig(filename string) (AppConfig, error) {
 
 	apiKey, ok := env[API_KEY]
 	if !ok {
-		return AppConfig{}, ErrApiKeyNotFound
+		return AppConfig{}, fmt.Errorf("API KEY not provided in .env")
 	}
 
 	// by default env[ENV_KEY] == ""
@@ -92,7 +92,13 @@ func LoadConfig(filename string) (AppConfig, error) {
 
 	cerebrusToken, ok := env[CEREBRUS_TOKEN]
 	if !ok {
-		slog.Warn("Cerebrus token is not set in env. AI wont work!")
+		slog.Warn("Cerebrus token is not set in env. AI might wont work!")
+		cerebrusToken = ""
+	}
+
+	groqToken, ok := env[GROQ_TOKEN]
+	if !ok {
+		slog.Warn("Groq token is not set in env. AI might wont work!")
 		cerebrusToken = ""
 	}
 
@@ -101,5 +107,6 @@ func LoadConfig(filename string) (AppConfig, error) {
 		Port:          port,
 		Environment:   e,
 		CerebrusToken: cerebrusToken,
+		GroqToken:     groqToken,
 	}, nil
 }
