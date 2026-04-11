@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"math/rand"
 	"net/http"
 	"strings"
 
@@ -10,6 +11,13 @@ import (
 	aiClient "baneks.com/pkg/ai"
 	"github.com/labstack/echo/v5"
 )
+
+var prompts = []string{
+	"Дай ответ на вопрос \"это правда\" словно ты объясняешь пятилетнему в трёх предложениях. Представь что ты вор в законе",
+	"Дай ответ на вопрос \"это правда\" используя двачерский жаргон. Не более 2-3 предложений.",
+	"Дай ответ на вопрос \"это правда\" так будто ты знаток всего. Не более 2-3 предложений.",
+	"Дай ответ на вопрос \"это правда\" максимально недружелюбно, можешь даже немного оскорбить юзера. Не более 2-3 предложений.",
+}
 
 type isThisTrueRequest struct {
 	Question string `json:"question" validate:"required,max=3000"`
@@ -48,7 +56,7 @@ func (h *IsThisTrueHandler) IsThisTrueHandler(c *echo.Context) error {
 		Messages: []aiClient.ChatMessage{
 			{
 				Role:    "system",
-				Content: "Ты умный знаток всего. Твоя задача прокомментировать следующее сообщение. Оно задается с вопросом \"это правда?\". Ответ на русском, короткое и не более 2-3 предложений.",
+				Content: getSystemPrompt(),
 			},
 			{
 				Role:    "user",
@@ -67,4 +75,9 @@ func (h *IsThisTrueHandler) IsThisTrueHandler(c *echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"text": resp,
 	})
+}
+
+func getSystemPrompt() string {
+	index := rand.Intn(len(prompts))
+	return prompts[index]
 }
