@@ -1,60 +1,43 @@
 package banekloader
 
 import (
+	"net/http"
 	"sync"
 )
 
-type Loader uint
-
-const (
-	SITE_LOADER = iota
-	RU_LOADER
-)
-
-var mutex sync.Mutex
-
 type BanekBalancer struct {
-	currentLoader Loader
+	current int
+	mu sync.Mutex
+	loaders []BaneksLoader
 }
 
-var instance *BanekBalancer
-var once sync.Once
-
-func GetBalancer() *BanekBalancer {
-	once.Do(func() {
-		instance = &BanekBalancer{
-			currentLoader: SITE_LOADER,
-		}
-	})
+func NewBanekBalancer(client *http.Client) *BanekBalancer {
+	instance := &BanekBalancer{
+		loaders: []BaneksLoader{
+			NewBanekRuLoader(client),
+			NewBaneksSiteLoader(client),
+		},
+	}
 	return instance
 }
 
-func (balancer *BanekBalancer) GetLoader() BaneksLoader {
+func (b *BanekBalancer) GetLoader() BaneksLoader {
 	// thread safety for gorutines
 	// because it's a round robin approach,
 	// we cant allow them to read and write balancer's info all in once
-	mutex.Lock()
-	defer mutex.Unlock()
-	defer balancer.toggleBalancer()
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
-	switch balancer.currentLoader {
-	case SITE_LOADER:
-		return NewBaneksSiteLoader()
-	case RU_LOADER:
-		return NewBanekRuLoader()
-	default:
-		return NewBaneksSiteLoader()
+	// на случай если кто-то решит создать балансер не через New
+	if len(b.loaders) == 0 {
+		return nil
 	}
-}
 
-func (balancer *BanekBalancer) toggleBalancer() {
-	// not thread safe
-	switch balancer.currentLoader {
-	case SITE_LOADER:
-		balancer.currentLoader = RU_LOADER
-	case RU_LOADER:
-		balancer.currentLoader = SITE_LOADER
-	default:
-		balancer.currentLoader = SITE_LOADER
+	loader := b.loaders[b.current]
+	b.current++
+	if b.current >= len(b.loaders) {
+		b.current = 0
 	}
+
+	return loader
 }
