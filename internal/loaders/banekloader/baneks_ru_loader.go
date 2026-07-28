@@ -16,13 +16,15 @@ import (
 
 type BaneksRuLoader struct {
 	siteUri string
+	client *http.Client
 }
 
 var banekRuUri string = "https://baneks.ru"
 
-func NewBanekRuLoader() *BaneksRuLoader {
+func NewBanekRuLoader(client *http.Client) *BaneksRuLoader {
 	return &BaneksRuLoader{
 		siteUri: banekRuUri,
+		client: client,
 	}
 }
 
@@ -34,7 +36,7 @@ func (loader *BaneksRuLoader) GetRandomBanek(ctx context.Context) (model.Banek, 
 		return model.Banek{}, fmt.Errorf("error creating request: %w", err)
 	}
 
-	response, err := http.DefaultClient.Do(req)
+	response, err := loader.client.Do(req)
 	if err != nil {
 		return model.Banek{}, &customerrors.HttpNetworkError{
 			Err: err,
@@ -42,6 +44,7 @@ func (loader *BaneksRuLoader) GetRandomBanek(ctx context.Context) (model.Banek, 
 		}
 	}
 	defer response.Body.Close()
+
 	if response.StatusCode == http.StatusNotFound {
 		return model.Banek{}, &customerrors.NotFoundRequestError{
 			Uri: req.URL.String(),

@@ -14,15 +14,20 @@ import (
 )
 
 const (
-	minimumMemeYear int = 2015
-)
-
-const (
 	baseMemesUri string = "https://idiod.qabyldau.com"
+	minimumMemeYear int = 2015
 )
 
 type QablydauMemeLoader struct {
 	baseUri string
+	client *http.Client
+}
+
+func NewQablydauMemeLoader(client *http.Client) *QablydauMemeLoader {
+	return &QablydauMemeLoader{
+		baseUri: baseMemesUri,
+		client: client,
+	}
 }
 
 // Base response for pages such as /random, /random/:year, /top, /top/:year, etc
@@ -39,12 +44,6 @@ type JsonResponse struct {
 	} `json:"props"`
 	Version string `json:"version"`
 	Url     string `json:"url"`
-}
-
-func NewQablydauMemeLoader() *QablydauMemeLoader {
-	return &QablydauMemeLoader{
-		baseUri: baseMemesUri,
-	}
 }
 
 /// GET RANDOM MEMES FUNCTIONS
@@ -98,7 +97,7 @@ func (loader *QablydauMemeLoader) getRandomMemes(ctx context.Context, year int) 
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
-	response, err := http.DefaultClient.Do(req)
+	response, err := loader.client.Do(req)
 	if err != nil {
 		return nil, &customerrors.HttpNetworkError{
 			Err: err,

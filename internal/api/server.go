@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
+	"time"
 
 	"baneks.com/internal/api/ai"
 	"baneks.com/internal/api/baneks"
@@ -11,6 +13,7 @@ import (
 	"baneks.com/internal/api/memes"
 	"baneks.com/internal/api/middlewares"
 	customerrors "baneks.com/internal/custom_errors"
+	memesloader "baneks.com/internal/loaders/memes_loader"
 	aiPkg "baneks.com/pkg/ai"
 	"baneks.com/pkg/memer"
 	"github.com/labstack/echo/v5"
@@ -20,6 +23,7 @@ import (
 type Dependencies struct {
 	Memer    *memer.Memer
 	AiClient *aiPkg.AiClient
+	MemeLoader memesloader.MemeLoader
 }
 
 func InitializeServer(
@@ -41,8 +45,12 @@ func InitializeServer(
 
 func initApiGroup(s *echo.Echo, deps *Dependencies) {
 	g := s.Group("/api")
-	baneks.InitBanekRouter(g)
-	memes.InitMemesRouter(g)
+
+	banekClient := &http.Client{
+		Timeout: 15 * time.Second,
+	}
+	baneks.InitBanekRouter(g, banekClient)
+	memes.InitMemesRouter(g, deps.MemeLoader)
 	memegenerator.InitMemeGeneratorRouter(g, deps.Memer)
 	ai.InitAiRouter(g, deps.AiClient)
 }

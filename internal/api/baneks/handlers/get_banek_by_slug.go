@@ -6,7 +6,6 @@ import (
 
 	"baneks.com/internal/api/baneks/dto"
 	customerrors "baneks.com/internal/custom_errors"
-	"baneks.com/internal/loaders/banekloader"
 	customvalidator "baneks.com/internal/utils/validator"
 	"github.com/labstack/echo/v5"
 )
@@ -15,7 +14,7 @@ type HandlerRequest struct {
 	Slug string `param:"slug"`
 }
 
-func GetBanekBySlug(c *echo.Context) error {
+func (h *Handlers) GetBanekBySlug(c *echo.Context) error {
 	ctx := c.Request().Context()
 	requestParams := new(HandlerRequest)
 	if err := c.Bind(requestParams); err != nil {
@@ -25,8 +24,8 @@ func GetBanekBySlug(c *echo.Context) error {
 	if httpError != nil {
 		return httpError
 	}
-	loader := banekloader.NewBaneksSiteLoader()
-	banek, err := loader.GetBanekBySlug(ctx, requestParams.Slug)
+
+	banek, err := h.banekSiteLoader.GetBanekBySlug(ctx, requestParams.Slug)
 	if err != nil {
 		if _, ok := errors.AsType[*customerrors.NotFoundRequestError](err); ok {
 			return customerrors.NewAppHTTPError(http.StatusNotFound, "Banek not found", err)

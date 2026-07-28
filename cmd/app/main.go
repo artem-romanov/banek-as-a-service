@@ -15,6 +15,7 @@ import (
 
 	api "baneks.com/internal/api"
 	cfg "baneks.com/internal/config"
+	memesloader "baneks.com/internal/loaders/memes_loader"
 	aiPkg "baneks.com/pkg/ai"
 	"baneks.com/pkg/memer"
 	"github.com/labstack/echo/v5"
@@ -47,6 +48,7 @@ func main() {
 	server := api.InitializeServer(ctx, logger, config.ApiKey, api.Dependencies{
 		Memer:    deps.Memer,
 		AiClient: deps.AiClient,
+		MemeLoader: deps.MemesLoader,
 	})
 
 	serverConfig := echo.StartConfig{
@@ -62,6 +64,7 @@ func main() {
 type AppDependencies struct {
 	Memer    *memer.Memer
 	AiClient *aiPkg.AiClient
+	MemesLoader memesloader.MemeLoader
 }
 
 func initializeDependencies(config *cfg.AppConfig) (*AppDependencies, error) {
@@ -91,6 +94,11 @@ func initializeDependencies(config *cfg.AppConfig) (*AppDependencies, error) {
 	return &AppDependencies{
 		Memer:    m,
 		AiClient: aiClient,
+		MemesLoader: memesloader.NewQablydauMemeLoader(
+			&http.Client{
+				Timeout: 15 * time.Second,
+			},
+		),
 	}, nil
 }
 func initAiClient(provider aiPkg.Provider, proxyAddr string) (*aiPkg.AiClient, error) {

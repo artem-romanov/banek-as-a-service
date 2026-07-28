@@ -18,11 +18,13 @@ const banekSiteUri = "https://baneks.site"
 
 type BaneksSiteLoader struct {
 	siteUri string
+	client *http.Client
 }
 
-func NewBaneksSiteLoader() *BaneksSiteLoader {
+func NewBaneksSiteLoader(client *http.Client) *BaneksSiteLoader {
 	return &BaneksSiteLoader{
 		siteUri: banekSiteUri,
+		client: client,
 	}
 }
 
@@ -34,7 +36,7 @@ func (loader *BaneksSiteLoader) GetRandomBanek(ctx context.Context) (model.Banek
 		return model.Banek{}, fmt.Errorf("error creating request: %w", err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := loader.client.Do(req)
 	if err != nil {
 		return model.Banek{}, err
 	}
@@ -69,7 +71,7 @@ func (loader *BaneksSiteLoader) GetBanekBySlug(ctx context.Context, slug string)
 		return model.Banek{}, fmt.Errorf("error creating request: %w", err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := loader.client.Do(req)
 	if err != nil {
 		return model.Banek{}, &customerrors.HttpNetworkError{
 			Err: err,
