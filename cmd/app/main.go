@@ -140,7 +140,8 @@ func initAiClient(provider aiPkg.Provider, proxyAddr string) (*aiPkg.AiClient, e
 		Timeout:   30 * time.Second,
 	}
 
-	return aiPkg.NewAiClient(httpClient, provider, 3)
+	c := aiPkg.NewAiClient(httpClient, provider, 3)
+	return c, nil
 }
 
 func setupLogger(config *cfg.AppConfig) *slog.Logger {

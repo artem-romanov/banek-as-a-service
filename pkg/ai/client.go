@@ -15,19 +15,25 @@ type AiClient struct {
 	provider Provider
 }
 
+// NewAiClient creates new client with selected Provider
+// It panics if provider is nil
 func NewAiClient(
 	client *http.Client,
 	provider Provider,
 	maxConcurrentLimit int,
-) (*AiClient, error) {
+) *AiClient {
+	semLimit := 1
+	if maxConcurrentLimit > 0 {
+		semLimit = maxConcurrentLimit
+	}
 	if provider == nil {
-		panic("provider is nill")
+		panic("provider is nil")
 	}
 	return &AiClient{
 		client:   client,
-		sem:      make(chan struct{}, maxConcurrentLimit),
+		sem:      make(chan struct{}, semLimit),
 		provider: provider,
-	}, nil
+	}
 }
 
 type chatRequestMessagesDTO struct {
@@ -64,8 +70,12 @@ func (c *AiClient) Chat(
 	ctx context.Context,
 	request ChatRequest,
 ) (string, error) {
-	c.sem <- struct{}{}
-	defer func() { <-c.sem }()
+	select {
+		case c.sem <- struct{}{}:
+			defer func() { <-c.sem}()
+		case <-ctx.Done():
+			return "", ctx.Err()
+	}
 
 	dto := chatRequestToDTO(request, c.provider.Model())
 	requestBody, err := json.Marshal(dto)
@@ -73,8 +83,6 @@ func (c *AiClient) Chat(
 		return "", fmt.Errorf("request body marshall error: %w", err)
 	}
 
-	// TODO: I don't like bytes.NewReader(body).
-	// Think about how to decrease allocations.
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		"POST",
