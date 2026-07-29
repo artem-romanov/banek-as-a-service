@@ -102,7 +102,13 @@ func initializeDependencies(config *cfg.AppConfig) (*AppDependencies, error) {
 	}, nil
 }
 func initAiClient(provider aiPkg.Provider, proxyAddr string) (*aiPkg.AiClient, error) {
-	var transport *http.Transport
+	transport := &http.Transport{
+		TLSHandshakeTimeout:   10 * time.Second,
+		IdleConnTimeout:       90 * time.Second,
+		MaxIdleConns:          100,
+		MaxIdleConnsPerHost:   10,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
 
 	if proxyAddr != "" {
 		dialer, err := proxy.SOCKS5("tcp", proxyAddr, nil, proxy.Direct)
@@ -116,23 +122,7 @@ func initAiClient(provider aiPkg.Provider, proxyAddr string) (*aiPkg.AiClient, e
 			}
 			return dialer.Dial(network, addr)
 		}
-
-		transport = &http.Transport{
-			DialContext:           dialContext,
-			TLSHandshakeTimeout:   10 * time.Second,
-			IdleConnTimeout:       90 * time.Second,
-			MaxIdleConns:          100,
-			MaxIdleConnsPerHost:   10,
-			ExpectContinueTimeout: 1 * time.Second,
-		}
-	} else {
-		transport = &http.Transport{
-			TLSHandshakeTimeout:   10 * time.Second,
-			IdleConnTimeout:       90 * time.Second,
-			MaxIdleConns:          100,
-			MaxIdleConnsPerHost:   10,
-			ExpectContinueTimeout: 1 * time.Second,
-		}
+		transport.DialContext = dialContext
 	}
 
 	httpClient := &http.Client{
